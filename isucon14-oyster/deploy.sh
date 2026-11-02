@@ -13,6 +13,8 @@ APP_IP=$(ip $APP); DB_IP=$(ip $DB)
 (cd go && GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -o isuride .)
 
 for h in s1 s2 s3; do
+  scp -F $CFG -q conf/net-tune.sh conf/net-tune.service $h:/tmp/
+  $SSH $h "sudo install -m755 /tmp/net-tune.sh /usr/local/sbin/net-tune.sh && sudo install -m644 /tmp/net-tune.service /etc/systemd/system/net-tune.service && sudo systemctl daemon-reload && sudo systemctl enable net-tune >/dev/null 2>&1 && sudo systemctl restart net-tune"
   $SSH $h "sudo systemctl disable --now isuride-matcher isuride-payment_mock >/dev/null 2>&1 || true"
   if [[ $h == $DB ]]; then
     scp -F $CFG -q conf/mysqld.cnf $h:/tmp/mysqld.cnf

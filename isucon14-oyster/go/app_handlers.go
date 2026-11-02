@@ -2,8 +2,8 @@ package main
 
 import (
 	"errors"
-	"os"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 
@@ -470,4 +470,3 @@ func appGetNearbyChairs(w http.ResponseWriter, r *http.Request) {
 		RetrievedAt: time.Now().UnixMilli(),
 	})
 }
-

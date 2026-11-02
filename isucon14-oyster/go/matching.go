@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log/slog"
 	"os"
 	"sort"
 	"strconv"
@@ -15,7 +16,12 @@ func matchingLoop() {
 	t := time.NewTicker(time.Duration(interval) * time.Millisecond)
 	for range t.C {
 		mu.Lock()
+		t0 := time.Now()
+		nw := len(st.waiting)
 		doMatching()
+		if d := time.Since(t0); d > 3*time.Millisecond {
+			slog.Info("slow matching", "dur", d, "waiting", nw)
+		}
 		mu.Unlock()
 	}
 }
