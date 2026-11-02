@@ -1,0 +1,59 @@
+upstream app {
+  server __APP__:8080;
+  keepalive 256;
+  keepalive_requests 1000000;
+}
+
+server {
+  listen 80 default_server;
+  server_name _;
+  root /var/www/html;
+  location / {
+    try_files $uri $uri/ =404;
+  }
+}
+
+server {
+  listen 443 ssl default_server;
+  server_name _;
+  root /var/www/html;
+  ssl_certificate     /etc/nginx/tls/dummy.crt;
+  ssl_certificate_key /etc/nginx/tls/dummy.key;
+  ssl_protocols TLSv1.3;
+  location / {
+    try_files $uri $uri/ =404;
+  }
+}
+
+server {
+  listen 443 ssl;
+  server_name xiv.isucon.net;
+  server_name *.xiv.isucon.net;
+
+  ssl_certificate     /etc/nginx/tls/_.xiv.isucon.net.crt;
+  ssl_certificate_key /etc/nginx/tls/_.xiv.isucon.net.key;
+  ssl_protocols TLSv1.3;
+
+  client_max_body_size 10m;
+  root /home/isucon/webapp/public/;
+  location / {
+    try_files $uri /index.html;
+    expires 1d;
+  }
+  location /api/ {
+    proxy_http_version 1.1;
+    proxy_set_header Connection "";
+    proxy_set_header Host $host;
+    proxy_buffering off;
+    proxy_read_timeout 3600s;
+    proxy_pass http://app;
+  }
+  location /api/internal/ {
+    allow 127.0.0.1;
+    deny all;
+    proxy_http_version 1.1;
+    proxy_set_header Connection "";
+    proxy_set_header Host $host;
+    proxy_pass http://app;
+  }
+}

@@ -1,0 +1,22 @@
+Host *
+  IdentityFile /Users/seijiro/work/cloud-init-isucon/.orca/cloud-init-isucon/lancetfish/isucon14-local/keys/id_ed25519
+  IdentitiesOnly yes
+  StrictHostKeyChecking no
+  UserKnownHostsFile /dev/null
+  LogLevel ERROR
+  ConnectTimeout 10
+  ControlMaster auto
+  ControlPath /tmp/cm-isu-%C
+  ControlPersist 30m
+Host s1
+  HostName 192.168.252.3
+  User isucon
+Host s2
+  HostName 192.168.252.4
+  User isucon
+Host s3
+  HostName 192.168.252.2
+  User isucon
+Host bench
+  HostName 192.168.252.5
+  User ubuntu
