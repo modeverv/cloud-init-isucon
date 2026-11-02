@@ -1,0 +1,12 @@
+[Unit]
+Description=Spread NIC softirq with RPS/RFS
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/net-tune.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

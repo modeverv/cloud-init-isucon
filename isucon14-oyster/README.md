@@ -8,7 +8,9 @@ Mac上のMultipass 3台 (各2vCPU/4GiB) + ベンチ専用VM (8vCPU) での ISUCO
 |---|---:|---|
 | 初期実装 (contest-start) | 524 | lancetfish/isucon14-local/baseline.md |
 | codex 最高 | 34,527 | bench VM 上の過去ログ |
-| 本実装 (最終) | **190,840 〜 270,097** (全て pass) | 3台構成。同一コードでも±30k程度ぶれる |
+| 本実装 (1回目) | **190,840 〜 270,097** (全て pass) | 3台構成。同一コードでも±30k程度ぶれる |
+| nginx 対策後 | 197,018 〜 271,973 (全て pass) | kTLS 有りの交互比較平均 238,730 |
+| Macの不要アプリ停止後 (nginx対策前) | 205,286 / 226,890 / **277,483** | 最高点 |
 
 ## 構成
 
@@ -29,6 +31,25 @@ matcher / payment_mock サービスは停止 (マッチングはアプリ内 gor
 - **nearby-chairs**: ライド完了直後 1 秒は空車として返さない (ベンチが評価済みを反映する前に返すと CODE=30)。
 - **決済**: Idempotency-Key=ライドID で成功までリトライ。並列ヘッジは二重決済になるので不可 (検証済み)。
 - nginx: upstream keepalive, SSE 用 proxy_buffering off, worker_connections 増加。MySQL: binlog 無効等。
+
+## nginx の詰まり対策 (2回目の作業)
+
+計測で分かったこと:
+- nginx 自身の処理時間 ($request_time - $upstream_response_time) は p99 でも 1ms 以下。
+- しかし `POST /api/chair/coordinate` の 11〜13% が 30ms(=1tick) を超えていた。Go ハンドラ内では 20ms 超はほぼゼロ、app を nginx と同居させても変わらず → **nginx のイベントループの詰まり** (worker 2つに長寿命接続が偏り、静的ファイル約1GB/回の TLS 暗号化中に他の接続が待たされる) が原因。
+- s1 の softirq が CPU0 だけに集中していた (単一キュー virtio NIC)。
+
+対策と効果 (coordinate の 30ms 超の割合):
+| 変更 | 30ms超 |
+|---|---:|
+| 変更前 (worker auto=2, multi_accept on) | 11〜13% |
+| RPS/RFS で softirq を全CPUへ分散 (`conf/net-tune.sh`, systemd で永続化) | (CPU偏り解消) |
+| `listen ... reuseport` + worker 4 + multi_accept off | 4% |
+| + kTLS (`ssl_conf_command Options KTLS`、静的ファイルを sendfile で送れる) | **1.2%** |
+
+worker 8 は遅延はさらに減るがスコアは下がったため 4 を採用。
+kTLS 有無の交互4回比較: 無し平均 228,544 / 有り平均 238,730。
+レイテンシを下げてもベンチ CPU 飽和が上限なので、スコアの伸びは限定的。
 
 ## わかったこと (このローカル環境固有)
 

@@ -113,18 +113,18 @@ type State struct {
 	paymentURL string
 	modelSpeed map[string]int
 
-	owners         map[string]*Owner
-	ownerByToken   map[string]*Owner
-	ownerByRegTok  map[string]*Owner
-	chairs         map[string]*Chair
-	chairList      []*Chair
-	chairByToken   map[string]*Chair
-	users          map[string]*User
-	userByToken    map[string]*User
-	userByInvCode  map[string]*User
-	invCodeCount   map[string]int
-	rides          map[string]*Ride
-	waiting        []*Ride
+	owners        map[string]*Owner
+	ownerByToken  map[string]*Owner
+	ownerByRegTok map[string]*Owner
+	chairs        map[string]*Chair
+	chairList     []*Chair
+	chairByToken  map[string]*Chair
+	users         map[string]*User
+	userByToken   map[string]*User
+	userByInvCode map[string]*User
+	invCodeCount  map[string]int
+	rides         map[string]*Ride
+	waiting       []*Ride
 }
 
 var st *State
